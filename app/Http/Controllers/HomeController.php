@@ -60,4 +60,15 @@ class HomeController extends Controller
             }
         }
     }
+
+    public function install()
+    {
+        $param = [];
+
+        if(is_writable(base_path()."/storage")){
+            $param["storage"] = true;
+        }
+
+        return View::make('install',$param);
+    }
 }

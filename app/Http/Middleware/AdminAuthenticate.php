@@ -15,8 +15,8 @@ class AdminAuthenticate
      */
     public function handle($request, Closure $next)
     {
-        if(Auth::user()->role!=config('roles.system.ADMIN')){
-            return redirect('/dashboard');
+        if(empty(Auth::user()) || Auth::user()->role!=config('roles.system.ADMIN')){
+            return redirect('/login');
         }
         return $next($request);
     }

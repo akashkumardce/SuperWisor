@@ -4,15 +4,15 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
-class UserTeam extends Model
+class ServiceUser extends Model
 {
-    protected $table = 'user_team';
+    protected $table = 'service_user';
     public function user()
     {
         return $this->belongsTo(User::class);
     }
-    public function team()
+    public function service()
     {
-        return $this->belongsTo(Team::class);
+        return $this->belongsTo(Service::class);
     }
 }

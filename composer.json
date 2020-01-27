@@ -9,10 +9,17 @@
     "license": "MIT",
     "require": {
         "php": "^7.2",
+        "egeloen/http-adapter": "^1.0",
         "fideloper/proxy": "^4.0",
+        "guzzlehttp/guzzle": "^6.5",
         "laravel/framework": "^6.2",
         "laravel/tinker": "^2.0",
         "laravelcollective/html": "~6.0",
+        "lstrojny/fxmlrpc": "^0.15.0",
+        "php-http/guzzle6-adapter": "^2.0",
+        "php-http/message": "^1.8",
+        "supervisorphp/configuration": "^0.2.1",
+        "supervisorphp/supervisor": "^3.0",
         "yajra/laravel-datatables-oracle": "^9.8"
     },
     "require-dev": {

@@ -118,12 +118,12 @@ class TeamManagerController extends Controller
      */
     public function getTeamList()
     {
-        return DataTables::of(Team::query())->make(true);
+        return DataTables::of(Team::query()->with(['user'])->withCount(['member','server']))->make(true);
     }
 
     public function getMasters($team)
     {
-        return DataTables::of(UserTeam::query()->where('team_id', $team)->where('role', 'MASTER_DEVELOPER'))->make(true);
+        return DataTables::of(UserTeam::query()->where('team_id', $team)->where('role', 'MASTER_DEVELOPER')->with(['user']))->make(true);
     }
 
     public function addMasters($team)
@@ -195,7 +195,7 @@ class TeamManagerController extends Controller
 
     public function getUsers($team)
     {
-        return DataTables::of(UserTeam::query()->where('team_id', $team)->where('role', 'SERVICE_DEVELOPER'))->make(true);
+        return DataTables::of(UserTeam::query()->where('team_id', $team)->where('role', 'SERVICE_DEVELOPER')->with(['user']))->make(true);
     }
     public function addUsers($team)
     {
@@ -264,7 +264,7 @@ class TeamManagerController extends Controller
 
     public function getServers($team)
     {
-        return DataTables::of(ServerTeam::query()->where('team_id', $team))->make(true);
+        return DataTables::of(ServerTeam::query()->where('team_id', $team)->with(['server']))->make(true);
     }
     public function addServers($team)
     {

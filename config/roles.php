@@ -2,9 +2,7 @@
 
 return ["system" => array(
     'ADMIN' => "ADMIN",
-    'OWNER' => "OWNER",
-    'USER' => "USER",
-    'VIEWER' => "VIEWER"
+    'USER' => "USER"
 ), "team" => array(
     'MASTER_DEVELOPER' => "MASTER_DEVELOPER",
     'SERVICE_DEVELOPER' => "SERVICE_DEVELOPER"

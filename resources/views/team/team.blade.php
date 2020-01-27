@@ -314,7 +314,7 @@
 
         function linkDeveloper() {
             var selectedValue = $('select[name="user"]').val();
-            var selectedText = $( 'select[name="master"] option:selected').text();
+            var selectedText = $( 'select[name="user"] option:selected').text();
             $.ajax({
                 type:'POST',
                 url:"{{ url('/teams/') }}/{{ $id  }}/users",
@@ -343,7 +343,7 @@
 
         function linkServer() {
             var selectedValue = $('select[name="server"]').val();
-            var selectedText = $( 'select[name="master"] option:selected').text();
+            var selectedText = $( 'select[name="server"] option:selected').text();
             $.ajax({
                 type:'POST',
                 url:"{{ url('/teams/') }}/{{ $id  }}/servers",
