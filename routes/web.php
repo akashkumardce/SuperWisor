@@ -21,8 +21,8 @@ Route::post('/logout', array("as" => "logout", 'uses' => 'HomeController@logout'
 
 //TEAM
 Route::get('/dashboard', array('uses' => 'DashboardController@showDashbard'))->middleware('auth');
-Route::get('/team-manage', array('uses' => 'TeamManagerController@showDashbard'))->middleware(['auth','auth.admin']);
-Route::get('/team-list', array('uses' => 'TeamManagerController@getTeamList'))->middleware(['auth','auth.admin']);
+Route::get('/team-manage', array('uses' => 'TeamManagerController@showDashbard'))->middleware(['auth']);
+Route::get('/team-list', array('uses' => 'TeamManagerController@getTeamList'))->middleware(['auth']);
 
 Route::get('/teams/{teamId}', array('uses' => 'TeamManagerController@getTeamDetails'))->middleware(['auth','auth.admin']);
 Route::post('/teams', array('uses' => 'TeamManagerController@addTeam'))->middleware(['auth','auth.admin']);
@@ -41,7 +41,7 @@ Route::post('/teams/{teamId}/servers', array('uses' => 'TeamManagerController@ad
 Route::delete('/teams/{teamId}/servers', array('uses' => 'TeamManagerController@removeServers'))->middleware(['auth','auth.admin']);
 
 //LOG
-Route::get('/log-list/{action}', array('uses' => 'LogController@getLog'))->middleware(['auth','auth.admin']);
+Route::get('/log-list/{action}', array('uses' => 'LogController@getLog'))->middleware(['auth']);
 
 
 
@@ -65,18 +65,21 @@ Route::post('/servers', array('uses' => 'ServerManagerController@addServer'))->m
 Route::get('/servers/{serverId}', array('uses' => 'ServerManagerController@getServerDetails'))->middleware(['auth','auth.admin']);
 Route::put('/servers/{serverId}', array('uses' => 'ServerManagerController@updateServer'))->middleware(['auth','auth.admin']);
 Route::get('/servers/{serverId}/team', array('uses' => 'ServerManagerController@getServerTeams'))->middleware(['auth','auth.admin']);
-Route::get('/servers/{serverId}/service', array('uses' => 'ServerManagerController@getServerServices'))->middleware(['auth','auth.admin']);
+Route::get('/servers/{serverId}/service', array('uses' => 'ServerManagerController@getServerServices'))->middleware(['auth']);
 Route::delete('/servers/{serverId}', array('uses' => 'ServerManagerController@removeServer'))->middleware(['auth','auth.admin']);
 Route::delete('/servers/{serverId}/team', array('uses' => 'ServerManagerController@removeTeam'))->middleware(['auth','auth.admin']);
-
+Route::put('/servers/status/{serverId}', array('uses' => 'ServerManagerController@statusUpdate'))->middleware(['auth']);
 
 //Service
 Route::get('/service-manage', array('uses' => 'ServiceManagerController@showDashboard'))->middleware('auth');
 Route::get('/service-list', array('uses' => 'ServiceManagerController@getServiceList'))->middleware(['auth']);
-Route::get('/services/{serviceId}', array('uses' => 'ServiceManagerController@getServiceDetails'))->middleware(['auth','auth.admin']);
-Route::get('/services/{serviceId}/server', array('uses' => 'ServiceManagerController@getServiceServer'))->middleware(['auth','auth.admin']);
-Route::get('/services/{serviceId}/master-team', array('uses' => 'ServiceManagerController@getMasterUsers'))->middleware(['auth','auth.admin']);
-Route::get('/services/{serviceId}/developer-team', array('uses' => 'ServiceManagerController@getDeveloperUsers'))->middleware(['auth','auth.admin']);
-Route::get('/services/{serviceId}/team', array('uses' => 'ServiceManagerController@getTeams'))->middleware(['auth','auth.admin']);
-Route::delete('/services/{serverId}/developer', array('uses' => 'ServiceManagerController@removeDeveloper'))->middleware(['auth','auth.admin']);
-Route::post('/services/{serverId}/developer', array('uses' => 'ServiceManagerController@linkDeveloper'))->middleware(['auth','auth.admin']);
+Route::get('/services/{serviceId}', array('uses' => 'ServiceManagerController@getServiceDetails'))->middleware(['auth']);
+Route::get('/services/{serviceId}/server', array('uses' => 'ServiceManagerController@getServiceServer'))->middleware(['auth']);
+Route::get('/services/{serviceId}/master-team', array('uses' => 'ServiceManagerController@getMasterUsers'))->middleware(['auth']);
+Route::get('/services/{serviceId}/developer-team', array('uses' => 'ServiceManagerController@getDeveloperUsers'))->middleware(['auth']);
+Route::get('/services/{serviceId}/team', array('uses' => 'ServiceManagerController@getTeams'))->middleware(['auth']);
+Route::delete('/services/{serverId}/developer', array('uses' => 'ServiceManagerController@removeDeveloper'))->middleware(['auth']);
+Route::post('/services/{serverId}/developer', array('uses' => 'ServiceManagerController@linkDeveloper'))->middleware(['auth']);
+
+
+Route::post('/services/perform', array('uses' => 'ServiceManagerController@perform'))->middleware(['auth']);

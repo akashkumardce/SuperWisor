@@ -16,7 +16,6 @@ class DashboardController extends Controller
 {
     public function showDashbard()
     {
-        //$states = DB::table("demo_state")->lists("name","id");
         $userId = Auth::user()->id;
 
         $teamListArr = UserTeam::query()->where('user_id',$userId)->select(['team_id'])->get()->toArray();
@@ -25,7 +24,7 @@ class DashboardController extends Controller
             $teamList[$team['team_id']]=1;
         }
         $teamListId = array_keys($teamList);
-        $serverListArr = ServerTeam::query()->where('team_id',$teamListId)->with(['server'])->get()->toArray();
+        $serverListArr = ServerTeam::query()->whereIn('team_id',$teamListId)->with(['server'])->get()->toArray();
         $serverList[0]  = "Server";
         foreach ($serverListArr as $server){
             $serverList[$server['server']['id']]=$server['server']['name'];
@@ -33,7 +32,7 @@ class DashboardController extends Controller
         $serverId = array_keys($serverList);
         unset($serverId[0]);
 
-        $serviceListArr = ServiceServer::query()->where('server_id',$serverId)->with(['service'])->get()->toArray();
+        $serviceListArr = ServiceServer::query()->whereIn('server_id',$serverId)->with(['service'])->get()->toArray();
         $serviceList[0]  = "Service";
         foreach ($serviceListArr as $service){
             $serviceList[$service['service']['id']]=$service['service']['name'];

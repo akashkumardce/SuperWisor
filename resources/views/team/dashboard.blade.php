@@ -26,6 +26,7 @@
                 </div>
             </div>
         </div>
+        @if(Auth::user()->role == 'ADMIN')
         <div class="col-lg-4 col-md-6 col-sm-12">
             <div class="white-box">
                 <h3 class="box-title"></h3>
@@ -46,6 +47,7 @@
                 </div>
             </div>
         </div>
+        @endif
         <div class="col-lg-4 col-md-6 col-sm-12">
             <div class="panel log-panel">
                 <div class="sk-chat-widgets">
@@ -65,7 +67,7 @@
         <!-- /.col -->
     </div>
     <script>
-        var teamtable,logtable;
+        var teamtable, logtable;
         $(document).ready(function () {
             teamtable = $('.team-table').DataTable({
                 processing: true,
@@ -79,6 +81,7 @@
                     {data: 'user.name', name: 'created_by', searchable: false},
                     {data: 'member_count', name: 'member', searchable: false},
                     {data: 'server_count', name: 'servers', searchable: false},
+                        @if(Auth::user()->role == 'ADMIN')
                     {
                         data: 'id', name: 'action', searchable: false,
                         'render': function (data, type, row, meta) { // render event defines the markup of the cell text
@@ -89,24 +92,13 @@
                     {
                         data: 'id', name: 'remove', searchable: false,
                         'render': function (data, type, row, meta) { // render event defines the markup of the cell text
-                            var a = '<a href="javascript:void(0)" onclick="removeTeam('+row.id+',\''+row.name+'\')"><i class="fa fa-trash"></i> </a> ';
+                            var a = '<a href="javascript:void(0)" onclick="removeTeam(' + row.id + ',\'' + row.name + '\')"><i class="fa fa-trash"></i> </a> ';
                             return a;
                         }
                     }
+                    @endif
 
                 ],
-                columnDefs: [{
-                    orderable: false,
-                    className: 'select-checkbox',
-                    targets: 0,
-                    checkboxes: {
-                        selectRow: true
-                    }
-                }],
-                select: {
-                    style: 'multi',
-                    selector: 'td:first-child'
-                },
                 order: [[1, 'asc']]
             });
         });
@@ -128,30 +120,30 @@
             });
         });
 
-        function removeTeam(id,value) {
+        function removeTeam(id, value) {
             $.ajax({
-                type:'DELETE',
-                url:"{{ url('/teams/') }}/"+id,
-                data:{id:id,value:value,"_token": "{{ csrf_token() }}"},
-                success:function(data) {
+                type: 'DELETE',
+                url: "{{ url('/teams/') }}/" + id,
+                data: {id: id, value: value, "_token": "{{ csrf_token() }}"},
+                success: function (data) {
                     $("#msg").html(data.message);
                     teamtable.ajax.reload();
                     logtable.ajax.reload();
 
-                    if(data.hasOwnProperty('success')) {
+                    if (data.hasOwnProperty('success')) {
                         var title = 'Team removed Successfuly';
                         var message = data.success;
-                        success(title,message);
-                    }else{
+                        success(title, message);
+                    } else {
                         var title = 'Team removal Failed';
                         var message = data.error;
-                        error(title,message);
+                        error(title, message);
                     }
 
                 },
-                error: function(xhr, msg){
+                error: function (xhr, msg) {
                     var title = 'Team removal Failed';
-                    error(title,msg);
+                    error(title, msg);
                 }
             });
         }

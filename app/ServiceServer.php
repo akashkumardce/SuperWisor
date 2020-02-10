@@ -24,4 +24,12 @@ class ServiceServer extends Model
     {
         return $this->belongsTo(ServiceServer::class,'service_id','service_id');
     }
+    public function startby()
+    {
+        return $this->belongsTo(User::class, 'start_by', 'id');
+    }
+    public function stopby()
+    {
+        return $this->belongsTo(User::class, 'stop_by', 'id');
+    }
 }

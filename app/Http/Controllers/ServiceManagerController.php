@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Providers\RouteServiceProvider;
+use App\Providers\ServiceManagerProvider;
+use App\Providers\SupervisordServiceProvider;
 use App\Server;
 use App\ServerTeam;
 use App\Service;
@@ -11,6 +13,7 @@ use App\ServiceUser;
 use App\Team;
 use App\User;
 use App\UserTeam;
+use fXmlRpc\Exception\FaultException;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Validator, Input, Redirect, Request, Illuminate\Database\QueryException;
 use View, Auth,DataTables, Illuminate\Validation\Rule, App\Log,App\ServiceServer;
@@ -20,18 +23,56 @@ class ServiceManagerController extends Controller
 {
     public function showDashboard()
     {
-        //$param['roles'] = config('roles.system');
         return View::make('service/dashboard');
     }
 
     public function getServiceList()
     {
-        return DataTables::of(Service::query()->withCount(['server','running']))->make(true);
+        $serviceArr = ServiceUser::query()->where("user_id",Auth::user()->id)
+            ->select("service_id")->get()->toArray();
+        foreach ($serviceArr as $service){
+             $serviceId[$service['service_id']] = 1;
+        }
+        $serviceId = array_keys($serviceId);
+
+        //UserTeam
+        $userTeamArr = UserTeam::query()->where("user_id",Auth::user()->id)
+            ->where("role",config('roles.team.MASTER_DEVELOPER'))
+            ->select("team_id")->get()->toArray();
+        $teamId = [];
+        foreach ($userTeamArr as $team){
+            $teamId[$team['team_id']] = 1;
+        }
+        $teamId = array_keys($teamId);
+
+        $serverTeamArr = ServerTeam::query()->whereIn("team_id",$teamId)->select("server_id")->get()->toArray();
+        $serverId = [];
+        foreach ($serverTeamArr as $serverTeam){
+            $serverId[$serverTeam['server_id']] = 1;
+        }
+        $serverId = array_keys($serverId);
+
+        $serviceServerArr = ServiceServer::query()->whereIn("server_id",$serverId)
+            ->select("service_id")->get()->toArray();
+        $serviceObjId = [];
+        foreach ($serviceServerArr as $serviceServer){
+            $serviceObjId[$serviceServer['service_id']] = 1;
+        }
+        $serviceObjId = array_keys($serviceObjId);
+
+        $serviceObjId[] =  $serviceId;
+
+
+
+        return DataTables::of(Service::query()->whereIn("id",$serviceObjId)
+            ->withCount(['server','running']))->make(true);
     }
 
     public function getServiceServer($serviceId)
     {
-        return DataTables::of(ServiceServer::query()->where("service_id",$serviceId)->with(['server','service']))->make(true);
+        return DataTables::of(ServiceServer::query()->where("service_id",$serviceId)
+            ->with(['server','service','startby','stopby']))
+            ->make(true);
     }
 
     public function getMasterUsers($serviceId)
@@ -44,7 +85,7 @@ class ServiceManagerController extends Controller
             }
         }
         $teamId = array_keys($teamId);
-        return DataTables::of(UserTeam::query()->where("team_id",$teamId)->where('role','MASTER_DEVELOPER')->with(['user']))->make(true);
+        return DataTables::of(UserTeam::query()->whereIn("team_id",$teamId)->where('role','MASTER_DEVELOPER')->with(['user']))->make(true);
     }
     public function getDeveloperUsers($serviceId)
     {
@@ -55,11 +96,13 @@ class ServiceManagerController extends Controller
                 $teamId[$teamArr['team_id']] = 1;
             }
         }
+        $masterUserId = [];
         $teamId = array_keys($teamId);
-        $masterUsers = UserTeam::query()->where("team_id",$teamId)->where('role','MASTER_DEVELOPER')->get()->toArray();
-        foreach ($masterUsers as $masterUser){
+        $masterUsers = UserTeam::query()->whereIn("team_id", $teamId)->where('role', 'MASTER_DEVELOPER')->get()->toArray();
+        foreach ($masterUsers as $masterUser) {
             $masterUserId[$masterUser['user_id']] = 1;
         }
+
         $masterUserId = array_keys($masterUserId);
 
         return DataTables::of(ServiceUser::query()->where("service_id",$serviceId)->whereNotIn('user_id',$masterUserId)->with(['user']))->make(true);
@@ -74,7 +117,7 @@ class ServiceManagerController extends Controller
             }
         }
         $teamId = array_keys($teamId);
-        return DataTables::of(Team::query()->where("id",$teamId))->make(true);
+        return DataTables::of(Team::query()->whereIn("id",$teamId))->make(true);
     }
 
 
@@ -93,23 +136,31 @@ class ServiceManagerController extends Controller
         }
         $teamId = array_keys($teamId);
 
-        $masterUsers = UserTeam::query()->where("team_id",$teamId)->where('role','MASTER_DEVELOPER')->get()->toArray();
-        foreach ($masterUsers as $masterUser){
+        $masterUserId = [];
+        $masterUsers = UserTeam::query()->whereIn("team_id", $teamId)->where('role', 'MASTER_DEVELOPER')->get()->toArray();
+        foreach ($masterUsers as $masterUser) {
             $masterUserId[$masterUser['user_id']] = 1;
         }
+
         $masterUserId = array_keys($masterUserId);
 
-        $userList = UserTeam::query()->where("team_id",$teamId)->whereNotIn('user_id',$masterUserId)->with(['user'])->get()->all();
         $userListArr = [];
-        foreach ($userList as $userInfo){
+        $userList = UserTeam::query()->whereIn("team_id", $teamId)->whereNotIn('user_id', $masterUserId)->with(['user'])->get()->toArray();
+        foreach ($userList as $userInfo) {
             $userListArr[$userInfo['user']['id']] = $userInfo['user']['email'];
         }
+
+        if(empty($userListArr)){
+            $userListArr[] = "No Developers or Teams added to the servers";
+        }
+        $isMaster = in_array(Auth::user()->id,$masterUserId);
 
         $data = array(
             "id" => $serviceId,
             "name" => $serviceInfo[0]["name"],
             "created_at" => $serviceInfo[0]["created_at"],
-            "userList" => $userListArr
+            "userList" => $userListArr,
+            "isMaster"=>$isMaster?true:false
         );
         return View::make('service/service', $data);
     }
@@ -171,13 +222,13 @@ class ServiceManagerController extends Controller
             }
             $teamId = array_keys($teamId);
 
-            $masterUsers = UserTeam::query()->where("team_id",$teamId)->where('role','MASTER_DEVELOPER')->get()->toArray();
+            $masterUsers = UserTeam::query()->whereIn("team_id",$teamId)->where('role','MASTER_DEVELOPER')->get()->toArray();
             foreach ($masterUsers as $masterUser){
                 $masterUserId[$masterUser['user_id']] = 1;
             }
             $masterUserId = array_keys($masterUserId);
 
-            $userList = UserTeam::query()->where("team_id",$teamId)->where('user_id',$userId)->whereNotIn('user_id',$masterUserId)->with(['user'])->get()->all();
+            $userList = UserTeam::query()->whereIn("team_id",$teamId)->where('user_id',$userId)->whereNotIn('user_id',$masterUserId)->with(['user'])->get()->all();
 
             if(empty($userList)){
                 return response()->json(['error' => "Developer is not eligible to be in the service"]);
@@ -204,5 +255,62 @@ class ServiceManagerController extends Controller
             }
             return response()->json(['success' => "Developer adedd successfully"]);
         }
+    }
+
+    public function perform(){
+        $action = Request::get('action');
+        $serviceId = Request::get('service');
+        $serverId = Request::get('server');
+
+        $service = Service::query()->find($serviceId);
+        //Service Permission
+        if($action!="logs") {
+            $developerExist = ServiceUser::query()->where(["service_id" => $serviceId, "user_id" => Auth::user()->id])->count();
+            $serverTeams = ServerTeam::query()->where(["server_id" => $serverId])->select("team_id")->get()->toArray();
+            $teamList = [];
+            foreach ($serverTeams as $serverTeam) {
+                $teamList[$serverTeam['team_id']] = 1;
+            }
+            $teamList = array_keys($teamList);
+            $masterExist = UserTeam::query()->whereIn("team_id", $teamList)
+                ->where(["user_id" => Auth::user()->id, "role" => config('roles.team.MASTER_DEVELOPER')])->count();
+
+            if ($developerExist == 0 && $masterExist == 0) {
+                return response()->json(['error' => "You dont have access On Service"]);
+            }
+        }
+
+        $server = Server::query()->find($serverId);
+        $serviceServer = ServiceServer::query()->where("server_id",$serverId)->where("service_id",$serviceId)->limit(1)->get();
+
+        $Log = new Log();
+        $Log->user_id = Auth::user()->id;
+        $Log->log = "action";
+        $Log->server_id = $server->id;
+        $Log->service_id = $service->id;
+
+
+        if(empty($server) || empty($service) || empty($serviceServer)){
+            return response()->json(['error' => "Service or Server Invalid"]);
+        }
+        try {
+            $supervisor = new SupervisordServiceProvider($server);
+            $response = $supervisor->perform($serviceServer[0],$action);
+            $Log->message = " SUCCESSFULLY $action Service ".$service->name. " on ". $server->name;
+            if($action!="logs") {
+                $Log->save();
+            }
+        }catch(FaultException $e){
+            if($action!="logs") {
+                $Log->message = " FAILED $action Service " . $service->name . " on " . $server->name . "--" . $e->getMessage();
+                $Log->save();
+            }
+            return response()->json(['error' => $e->getMessage()]);
+        }
+
+        return response()->json(['success' => "Service ".$action." successfully",
+            "message"=>$response]);
+
+
     }
 }

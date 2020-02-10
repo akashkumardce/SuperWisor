@@ -19,7 +19,8 @@
     <link href="{{ asset('assets/plugins/bower_components/morrisjs/morris.css') }}" rel="stylesheet">
     <!-- chartist CSS -->
     <link href="{{ asset('assets/plugins/bower_components/chartist-js/dist/chartist.min.css') }}" rel="stylesheet">
-    <link href="{{ asset('assets/plugins/bower_components/chartist-plugin-tooltip-master/dist/chartist-plugin-tooltip.css') }}" rel="stylesheet">
+    <link href="{{ asset('assets/plugins/bower_components/chartist-plugin-tooltip-master/dist/chartist-plugin-tooltip.css') }}"
+          rel="stylesheet">
     <!-- animation CSS -->
     <link href="{{ asset('assets/css/animate.css') }}" rel="stylesheet">
     <!-- Custom CSS -->
@@ -28,11 +29,10 @@
     <link href="{{ asset('assets/css/colors/default.css') }}" id="theme" rel="stylesheet">
 
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.js"></script>
-    <link  href="https://cdn.datatables.net/1.10.7/css/jquery.dataTables.css" rel="stylesheet">
-    <link  href="https://cdn.datatables.net/select/1.3.1/css/select.dataTables.min.css" rel="stylesheet">
-    <link  href="https://cdn.datatables.net/buttons/1.6.1/css/buttons.dataTables.min.css" rel="stylesheet">
-    <link  href="https://editor.datatables.net/extensions/Editor/css/editor.dataTables.min.css" rel="stylesheet">
-
+    <link href="https://cdn.datatables.net/1.10.7/css/jquery.dataTables.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/select/1.3.1/css/select.dataTables.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/buttons/1.6.1/css/buttons.dataTables.min.css" rel="stylesheet">
+    <link href="https://editor.datatables.net/extensions/Editor/css/editor.dataTables.min.css" rel="stylesheet">
 
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
@@ -47,7 +47,7 @@
 <!-- ============================================================== -->
 <div class="preloader">
     <svg class="circular" viewBox="25 25 50 50">
-        <circle class="path" cx="50" cy="50" r="20" fill="none" stroke-width="2" stroke-miterlimit="10" />
+        <circle class="path" cx="50" cy="50" r="20" fill="none" stroke-width="2" stroke-miterlimit="10"/>
     </svg>
 </div>
 
@@ -63,9 +63,10 @@
                     <!-- Logo icon image, you can use font-icon also -->
                     <b>
                         <!--This is dark logo icon-->
-                        <img src="{{ asset('assets/plugins/images/admin-logo.png') }}" alt="home" class="dark-logo" />
+                        <img src="{{ asset('assets/plugins/images/admin-logo.png') }}" alt="home" class="dark-logo"/>
                         <!--This is light logo icon-->
-                        <img src="{{ asset('assets/plugins/images/admin-logo-dark.png') }}" alt="home" class="light-logo" />
+                        <img src="{{ asset('assets/plugins/images/admin-logo-dark.png') }}" alt="home"
+                             class="light-logo"/>
                     </b>
                     <!-- Logo text image you can use text also -->
                     <span style="color: #2b1b1b;">
@@ -77,13 +78,17 @@
             <!-- /Logo -->
             <ul class="nav navbar-top-links navbar-right pull-right">
                 <li>
-                    <a class="nav-toggler open-close waves-effect waves-light hidden-md hidden-lg" href="javascript:void(0)"><i class="fa fa-bars"></i></a>
+                    <a class="nav-toggler open-close waves-effect waves-light hidden-md hidden-lg"
+                       href="javascript:void(0)"><i class="fa fa-bars"></i></a>
                 </li>
                 <li>
-                    <a class="profile-pic" href="#"> <img src="{{ asset('assets/plugins/images/users/user.jpg') }}" alt="user-img" width="36" class="img-circle"><b class="hidden-xs">{{ Auth::user()->name }}</b></a>
+                    <a class="profile-pic" href="#"> <img src="{{ asset('assets/plugins/images/users/user.jpg') }}"
+                                                          alt="user-img" width="36" class="img-circle"><b
+                                class="hidden-xs">{{ Auth::user()->name }}</b></a>
                 </li>
                 <li>
-                    <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                    <a href="{{ route('logout') }}"
+                       onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                         Logout
                     </a>
 
@@ -104,23 +109,41 @@
     <div class="navbar-default sidebar" role="navigation">
         <div class="sidebar-nav slimscrollsidebar">
             <div class="sidebar-head">
-                <h3><span class="fa-fw open-close"><i class="ti-close ti-menu"></i></span> <span class="hide-menu">Navigation</span></h3>
+                <h3><span class="fa-fw open-close"><i class="ti-close ti-menu"></i></span> <span class="hide-menu">Navigation</span>
+                </h3>
             </div>
             <ul class="nav" id="side-menu">
                 <li style="padding: 70px 0 0;">
-                    <a href="{{ url('dashboard')  }}" class="waves-effect"><i class="fa fa-clock-o fa-fw" aria-hidden="true"></i>Dashboard</a>
+                    <a href="{{ url('dashboard')  }}" class="waves-effect"><i class="fa fa-clock-o fa-fw"
+                                                                              aria-hidden="true"></i>Dashboard</a>
                 </li>
+                @if(Auth::user()->role == 'ADMIN')
+                    <li>
+                        <a href="{{ url('team-manage')  }}" class="waves-effect"><i class="fa fa-users fa-fw"
+                                                                                    aria-hidden="true"></i>Team
+                            Administration</a>
+                    </li>
+                    <li>
+                        <a href="{{ url('user-manage')  }}" class="waves-effect"><i class="fa fa-user fa-fw"
+                                                                                    aria-hidden="true"></i>User
+                            Administration</a>
+                    </li>
+                    <li>
+                        <a href="{{ url('server-manage')  }}" class="waves-effect"><i class="fa fa-server fa-fw"
+                                                                                      aria-hidden="true"></i>Server
+                            Administration</a>
+                    </li>
+                @else
+                    <li>
+                        <a href="{{ url('team-manage')  }}" class="waves-effect"><i class="fa fa-users fa-fw"
+                                                                                    aria-hidden="true"></i>Team
+                            View</a>
+                    </li>
+                @endif
                 <li>
-                    <a href="{{ url('team-manage')  }}" class="waves-effect"><i class="fa fa-users fa-fw" aria-hidden="true"></i>Team Administration</a>
-                </li>
-                <li>
-                    <a href="{{ url('user-manage')  }}" class="waves-effect"><i class="fa fa-user fa-fw" aria-hidden="true"></i>User Administration</a>
-                </li>
-                <li>
-                    <a href="{{ url('server-manage')  }}" class="waves-effect"><i class="fa fa-server fa-fw" aria-hidden="true"></i>Server Administration</a>
-                </li>
-                <li>
-                    <a href="{{ url('service-manage')  }}" class="waves-effect"><i class="fa fa-cog fa-fw" aria-hidden="true"></i>Service Administration</a>
+                    <a href="{{ url('service-manage')  }}" class="waves-effect"><i class="fa fa-cog fa-fw"
+                                                                                   aria-hidden="true"></i>Service
+                        Administration</a>
                 </li>
             </ul>
         </div>
@@ -136,7 +159,7 @@
         <div class="container-fluid">
             <div class="row bg-title">
                 <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
-                    <h4 class="page-title">@yield('title')</h4> </div>
+                    <h4 class="page-title">@yield('title')</h4></div>
                 <div class="col-lg-9 col-sm-8 col-md-8 col-xs-12">
                     <ol class="breadcrumb">
                         <li><a href="#">@yield('title')</a></li>
@@ -148,7 +171,7 @@
             @yield('content')
         </div>
         <!-- /.container-fluid -->
-        <footer class="footer text-center"> 2020 &copy; OpenSource by Akash Kumar </footer>
+        <footer class="footer text-center"> 2020 &copy; OpenSource by Akash Kumar</footer>
     </div>
     <!-- ============================================================== -->
     <!-- End Page Content -->
@@ -185,7 +208,7 @@
 
 
 <script>
-    function success(title,message) {
+    function success(title, message) {
         $.toast({
             heading: title,
             text: message,
@@ -196,7 +219,8 @@
             stack: 6
         });
     }
-    function error(title,message) {
+
+    function error(title, message) {
         $.toast({
             heading: title,
             text: message,

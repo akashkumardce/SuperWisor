@@ -4,25 +4,27 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Providers\RouteServiceProvider;
+use App\Providers\ServiceManagerProvider;
 use App\Server;
 use App\ServerTeam;
 use App\Team;
 use App\User;
 use App\UserTeam;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
-use Validator, Input, Redirect, Request;
+use Validator, Input, Redirect, Request, App\Service;
 use View, Auth,DataTables, Illuminate\Validation\Rule, App\Log,App\ServiceServer;
 use App\Providers\LoginServiceProvider;
 use App\Providers\SupervisordServiceProvider;
 
 class ServerManagerController extends Controller
 {
-    public function __construct() {
-        Validator::extend("ips", function($attribute, $value, $parameters) {
+    public function __construct()
+    {
+        Validator::extend("ips", function ($attribute, $value, $parameters) {
             $rules = [
                 'ip' => 'required|ip|unique:servers,ip',
             ];
-            $value = explode(",",$value);
+            $value = explode(",", $value);
             foreach ($value as $ip) {
                 $data = [
                     'ip' => $ip
@@ -35,6 +37,7 @@ class ServerManagerController extends Controller
             return true;
         });
     }
+
     public function showDashboard()
     {
         //$param['roles'] = config('roles.system');
@@ -47,26 +50,26 @@ class ServerManagerController extends Controller
             'team',
             'service',
             'running' => function ($query) {
-                $query->where('status',config('status.service.RUNNING'));
+                $query->where('status', config('status.service.RUNNING'));
             },
             'error' => function ($query) {
-                $query->where('status',config('status.service.FATAL'));
+                $query->where('status', config('status.service.FATAL'));
             }]))->make(true);
     }
 
     public function getServerTeams($serverId)
     {
-        return DataTables::of(ServerTeam::query()->where("server_id",$serverId)->with(['team']))->make(true);
+        return DataTables::of(ServerTeam::query()->where("server_id", $serverId)->with(['team']))->make(true);
     }
 
     public function getServerServices($serverId)
     {
-        return DataTables::of(ServiceServer::query()->where("server_id",$serverId)->with(['server','service']))->make(true);
+        return DataTables::of(ServiceServer::query()->where("server_id", $serverId)->with(['server', 'service','startby','stopby']))->make(true);
     }
 
     public function getServerDetails($serverId)
     {
-        $userInfo = Server::query()->where("id",$serverId)->get()->toArray();
+        $userInfo = Server::query()->where("id", $serverId)->get()->toArray();
         if (empty($userInfo)) {
             return Redirect::to('/server-manage');
         }
@@ -80,7 +83,8 @@ class ServerManagerController extends Controller
         return View::make('server/server', $data);
     }
 
-    public function addServer(){
+    public function addServer()
+    {
         $ips = Request::get('ip');
         $passsword = Request::get('password');
 
@@ -91,14 +95,14 @@ class ServerManagerController extends Controller
 
         // run the validation rules on the inputs from the form
         $validator = Validator::make(Request::all(), $rules);
-
+        $successIps = [];
         // if the validator fails, redirect back to the form
         if ($validator->fails()) {
             return Redirect::to('/server-manage')
                 ->withErrors($validator)// send back all errors to the login form
                 ->withInput();
         } else {
-            $value = explode(",",$ips);
+            $value = explode(",", $ips);
             foreach ($value as $ip) {
 
                 try {
@@ -111,46 +115,48 @@ class ServerManagerController extends Controller
                     $server->created_by = Auth::user()->id;
                     $supervisord = $this->validateServerConnection($server);
                     $server->save();
-                    $this->fetchServices($supervisord,$server);
+                    $serviceManagerProvider = new ServiceManagerProvider();
+                    $serviceManagerProvider->fetchServices($server, $supervisord);
+                    $successIps[] = $ip;
 
                 } catch (QueryException $e) { // It's actually a QueryException but this works too
-                    echo $e->getMessage();
-                    die;
                     $validator = Validator::make([], []);
                     if ($e->getCode() == 23000) {
                         $validator->errors()->add('ip', 'Few Servers Already Exist in the IP List');
                     } else {
                         $validator->errors()->add('ip', $e->getMessage());
                     }
-                    return Redirect::to('/user-manage')
-                        ->withErrors($validator)// send back all errors to the login form
-                        ->withInput();
-                } catch (\Exception $e){
-                    $validator->errors()->add('ip', 'Unable to connect to '.$ip);
                     return Redirect::to('/server-manage')
                         ->withErrors($validator)// send back all errors to the login form
                         ->withInput();
+                } catch (\Exception $e) {
+                    $validator->errors()->add('ip', 'Unable to connect to ' . $ip);
+                    return Redirect::to('/server-manage')
+                        ->withErrors($validator)// send back all errors to the login form
+                        ->with('success', ($successIps ? implode(",", $successIps) : "No Server") . ' addedd successfully')
+                        ->withInput();
                 }
-                $success=1;
+                $success = 1;
             }
-            if($success) {
+            if ($success) {
                 $Log = new Log();
                 $Log->user_id = Auth::user()->id;
                 $Log->log = "server";
                 $Log->message = Auth::user()->name . " Added Server " . $ips . " at " . date("Y-m-d H:i:s", time());
                 $Log->save();
                 return Redirect::to('/servers/' . $server->id);
-            }else{
+            } else {
                 $validator = Validator::make([], []);
                 $validator->errors()->add('ip', "unable to add servers");
-                return Redirect::to('/user-manage')
+                return Redirect::to('/server-manage')
                     ->withErrors($validator)// send back all errors to the login form
                     ->withInput();
             }
         }
     }
 
-    public function removeServer($serverId){
+    public function removeServer($serverId)
+    {
         $id = Request::get('id');
 
         $rules = array(
@@ -165,12 +171,13 @@ class ServerManagerController extends Controller
             return response()->json(['error' => "Only a server with no Team working on it can be deleted"]);
         } else {
             try {
-                Server::query()->where('id',$id)->where('id',$serverId)->delete();
+                Server::query()->where('id', $id)->where('id', $serverId)->delete();
+                ServiceServer::query()->where('server_id', $serverId)->delete();
 
                 $Log = new Log();
                 $Log->user_id = Auth::user()->id;
                 $Log->log = "server";
-                $Log->message = Auth::user()->name." Deleted Server ".Request::get('value')." at ".date("Y-m-d H:i:s", time());
+                $Log->message = Auth::user()->name . " Deleted Server " . Request::get('value') . " at " . date("Y-m-d H:i:s", time());
                 $Log->save();
             } catch (QueryException $e) { // It's actually a QueryException but this works too
                 return response()->json(['error' => $e->getMessage()]);
@@ -194,12 +201,12 @@ class ServerManagerController extends Controller
             return response()->json(['error' => $validator->errors()->all()]);
         } else {
             try {
-                ServerTeam::query()->where('id',$id)->where('server_id',$serverId)->delete();
+                ServerTeam::query()->where('id', $id)->where('server_id', $serverId)->delete();
 
                 $Log = new Log();
                 $Log->user_id = Auth::user()->id;
                 $Log->log = "server";
-                $Log->message = Auth::user()->name." Deleted Team ".Request::get('value')." from server ".$serverId." at ".date("Y-m-d H:i:s", time());
+                $Log->message = Auth::user()->name . " Deleted Team " . Request::get('value') . " from server " . $serverId . " at " . date("Y-m-d H:i:s", time());
                 $Log->save();
             } catch (QueryException $e) { // It's actually a QueryException but this works too
                 return response()->json(['error' => $e->getMessage()]);
@@ -208,7 +215,8 @@ class ServerManagerController extends Controller
         }
     }
 
-    public function updateServer($serverId){
+    public function updateServer($serverId)
+    {
         $id = $serverId;
         $password = Request::get('password');
 
@@ -221,43 +229,44 @@ class ServerManagerController extends Controller
 
         // if the validator fails, redirect back to the form
         if ($validator->fails()) {
-            return Redirect::to('/servers/'.$serverId)
+            return Redirect::to('/servers/' . $serverId)
                 ->withErrors($validator)// send back all errors to the login form
                 ->withInput();
         } else {
             try {
-                Server::query()->where('id',$id)->where('id',$serverId)->update(["password"=>$password]);
+                Server::query()->where('id', $id)->where('id', $serverId)->update(["password" => $password]);
 
                 $Log = new Log();
                 $Log->user_id = Auth::user()->id;
                 $Log->log = "server";
-                $Log->message = Auth::user()->name." Updated password of ".Request::get('value')." at ".date("Y-m-d H:i:s", time());
+                $Log->message = Auth::user()->name . " Updated password of " . Request::get('value') . " at " . date("Y-m-d H:i:s", time());
                 $Log->save();
             } catch (QueryException $e) {
                 $validator = Validator::make([], []);
                 $validator->errors()->add('password', $e->getMessage());
-                return Redirect::to('/servers/'.$serverId)
+                return Redirect::to('/servers/' . $serverId)
                     ->withErrors($validator)// send back all errors to the login form
                     ->withInput();
             }
-            return Redirect::to('/servers/'.$serverId)->with('success', 'Password updated successfully!!');;
+            return Redirect::to('/servers/' . $serverId)->with('success', 'Password updated successfully!!');;
         }
     }
 
     private function validateServerConnection(Server $server)
     {
         $supervisor = new SupervisordServiceProvider($server);
-        if(!$supervisor->isConnected()){
+        if (!$supervisor->isConnected()) {
             throw new \Exception('Not able to connect');
         }
-        $runningProcessess = $supervisor->getProcess();
-        //TODO- save running processess
-
         return $supervisor;
     }
 
-    private function fetchServices($supervisor, Server $server)
-    {
-        print_r($supervisor->getProcess());die;
+    public function statusUpdate($serverId){
+
+        $server = Server::query()->find($serverId);
+        $supervisord = $this->validateServerConnection($server);
+        $serviceManagerProvider = new ServiceManagerProvider();
+        $serviceManagerProvider->fetchServices($server, $supervisord);
+        return response()->json(['success' => "Server ".$server->ip." updated"]);
     }
 }

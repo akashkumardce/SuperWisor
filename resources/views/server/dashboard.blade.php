@@ -6,6 +6,12 @@
     <div class="row">
         <!-- .col -->
         <div class="col-md-14 col-lg-8 col-sm-12">
+            <?php if(session()->has('success')): ?>
+            <div class="alert alert-success">
+                <?php echo e(session()->get('success')); ?>
+
+            </div>
+            <?php endif; ?>
             <div class="white-box">
                 <h3 class="box-title">Team</h3>
                 <div class="table-responsive">

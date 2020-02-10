@@ -205,7 +205,7 @@
                         var message = data.success;
                         success(title,message);
                         setTimeout(function () {
-                            window.location.href="/server-manage";
+                            window.location.reload();
                         },3000);
                     }else{
                         var title = 'Server removal Failed';
