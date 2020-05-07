@@ -43,6 +43,22 @@ Route::delete('/teams/{teamId}/servers', array('uses' => 'TeamManagerController@
 //LOG
 Route::get('/log-list/{action}', array('uses' => 'LogController@getLog'))->middleware(['auth']);
 
+//ADMIN
+Route::get('/admin', array('uses' => 'AdminManagerController@show'))->middleware(['auth','auth.admin']);
+Route::put('/admin', array('uses' => 'AdminManagerController@change'))->middleware(['auth','auth.admin']);
+
+Route::get('/clear', function() {
+
+    Artisan::call('cache:clear');
+    Artisan::call('config:clear');
+    Artisan::call('config:cache');
+    Artisan::call('view:clear');
+
+    return "Cleared!";
+
+});
+
+
 
 
 //USER

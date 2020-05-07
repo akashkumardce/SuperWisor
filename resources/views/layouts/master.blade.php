@@ -82,9 +82,7 @@
                        href="javascript:void(0)"><i class="fa fa-bars"></i></a>
                 </li>
                 <li>
-                    <a class="profile-pic" href="#"> <img src="{{ asset('assets/plugins/images/users/user.jpg') }}"
-                                                          alt="user-img" width="36" class="img-circle"><b
-                                class="hidden-xs">{{ Auth::user()->name }}</b></a>
+                    <a class="profile-pic" href="#"> <b class="hidden-xs">{{ Auth::user()->name }}</b></a>
                 </li>
                 <li>
                     <a href="{{ route('logout') }}"
@@ -133,6 +131,10 @@
                                                                                       aria-hidden="true"></i>Server
                             Administration</a>
                     </li>
+                    <li>
+                        <a href="{{ url('admin')  }}" class="waves-effect"><i class="fa fa-server fa-fw"
+                                                                                      aria-hidden="true"></i>Administration</a>
+                    </li>
                 @else
                     <li>
                         <a href="{{ url('team-manage')  }}" class="waves-effect"><i class="fa fa-users fa-fw"
@@ -171,7 +173,7 @@
             @yield('content')
         </div>
         <!-- /.container-fluid -->
-        <footer class="footer text-center"> 2020 &copy; OpenSource by Akash Kumar</footer>
+        <footer class="footer text-center"> 2020 &copy; SuperWisor</footer>
     </div>
     <!-- ============================================================== -->
     <!-- End Page Content -->

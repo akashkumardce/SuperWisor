@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use App\Server;
+use App\ServerTeam;
 use App\Service;
 use App\ServiceServer;
+use App\Team;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
@@ -30,12 +32,15 @@ class ServiceManagerProvider
                 $service->id = $serviceObj->id;
             }
             $serviceServerObj = ServiceServer::query()->where("server_id",$serviceServer->server_id)
-                ->where("service_id",$service->id)->select(['id'])->first();
+                ->where("service_id",$service->id)
+                ->where("team_id",$serviceServer->team_id)->select(['id'])->first();
             if(empty($serviceServerObj)){
                 $serviceServer->service_id=$service->id;
+                $serviceServer->team_id=$serviceServer->team_id;
                 $serviceServer->save();
             }else{
                 ServiceServer::query()->where("id",$serviceServerObj->id)->update(["state"=>$serviceServer->status,
+                    "team_id"=>$serviceServer->team_id,
                     "status"=>$serviceServer->status,
                     "stop"=>$serviceServer->stop,
                     "start"=>$serviceServer->start,
@@ -55,13 +60,24 @@ class ServiceManagerProvider
         }
         $processes = $supervisor->getProcess();
         $serviceList = [];
+        $teamArr = Team::query()->get("id","name")->pluck('id','name')->all();
         foreach ($processes as $process) {
             $supervisorService = $process->getPayload();
             $service = new Service();
-            $service->name = $supervisorService['name'];
+            if (stristr($supervisorService['group'], "---")) {
+                $groupDivision = explode("---",$supervisorService['group']);
+                $teamId = $teamArr[$groupDivision[0]];
+                $serviceName = $groupDivision[1];
+            }else{
+                $teamId = 0;
+                $serviceName = $supervisorService['name'];
+            }
+            $service->name = $serviceName;
             $service->group_name = $supervisorService['group'];
 
             $serviceServer = new ServiceServer();
+            $serviceServer->display_name = $supervisorService['name'];
+            $serviceServer->team_id = $teamId;
             $serviceServer->server_id = $server->id;
             $serviceServer->description = $supervisorService['description'];
             $serviceServer->start = $supervisorService['start'];
@@ -72,7 +88,8 @@ class ServiceManagerProvider
             $serviceServer->pid = $supervisorService['pid'];
             $serviceServer->exitstatus = $supervisorService['exitstatus'];
             $serviceServer->logfile = $supervisorService['stdout_logfile'];
-            $this->addService($serviceServer, $service);
+
+            $this->addService($serviceServer, $service, $teamArr);
         }
 
     }

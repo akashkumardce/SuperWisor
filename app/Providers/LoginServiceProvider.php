@@ -15,10 +15,10 @@ class LoginServiceProvider extends ServiceProvider
      */
     public static function attempt($userdata)
     {
-        if(config("login.client")=="LDAP"){
-            $user = User::where('email', $userdata['email'])
+        if(config("login.driver")=="LDAP"){
+            /*$user = User::where('email', $userdata['email'])
                 ->where('password', $userdata['password'])
-                ->first();
+                ->first();*/
         }else {
             $user = User::where('email', $userdata['email'])
                 ->where('password', $userdata['password'])

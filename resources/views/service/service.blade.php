@@ -152,7 +152,7 @@
                 columns: [
                     {
                         data: 'user.email', name: 'user.email', searchable: true,
-                        @if($isMaster)
+                        @if($isMaster && Auth::user()->role == 'ADMIN')
                         'render': function (data, type, row, meta) { // render event defines the markup of the cell text
                             var a = '<a href="' + '{{ url("/users") }}/' + row.user.id + '">' + row.user.email + '</a>'; // row object contains the row data
                             return a;
@@ -174,7 +174,7 @@
                 columns: [
                     {
                         data: 'user.email', name: 'user.email', searchable: true,
-                        @if($isMaster)
+                        @if($isMaster && Auth::user()->role == 'ADMIN')
                         'render': function (data, type, row, meta) { // render event defines the markup of the cell text
                             var a = '<a href="' + '{{ url("/users") }}/' + row.user.id + '">' + row.user.email + '</a>'; // row object contains the row data
                             return a;
@@ -206,7 +206,7 @@
                 columns: [
                     {
                         data: 'name', name: 'name', searchable: true,
-                        @if($isMaster)
+                        @if($isMaster && Auth::user()->role == 'ADMIN')
                         'render': function (data, type, row, meta) { // render event defines the markup of the cell text
                             var a = '<a href="' + '{{ url("/teams") }}/' + row.id + '">' + row.name + '</a>'; // row object contains the row data
                             return a;
@@ -228,7 +228,7 @@
                 columns: [
                     {
                         data: 'server.ip', name: 'server.ip', searchable: true,
-                        @if($isMaster)
+                        @if($isMaster && Auth::user()->role == 'ADMIN')
                         'render': function (data, type, row, meta) { // render event defines the markup of the cell text
                             var a = '<a href="' + '{{ url("/servers") }}/' + row.server.id + '">' + row.server.ip + '</a>'; // row object contains the row data
                             return a;

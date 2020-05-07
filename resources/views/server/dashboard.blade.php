@@ -61,6 +61,21 @@
                     {{ Form::close() }}
                 </div>
             </div>
+            <div class="white-box">
+                <h3 class="box-title">FAQ to add servers-</h3>
+                <div class="table-responsive">
+                    <ol>
+                        <li>Install supervisord on server</li>
+                        <li>Change supervisor.conf - <a href="http://supervisord.org/configuration.html#inet-http-server-section-settings">refer</a>
+                            <ol>
+                                <li><b>Username</b> - superwisor</li>
+                                <li><b>Port</b> - 9001</li>
+                                <li><b>Password</b> - The password required for authentication to this HTTP server. This can be a cleartext password, or can be specified as a SHA-1 hash if prefixed by the string {SHA}. For example, {SHA}82ab876d1387bfafe46cc1c8a2ef074eae50cb1d is the SHA-stored version of the password “thepassword”.</li>
+                            </ol>
+                        </li>
+                    </ol>
+                </div>
+            </div>
         </div>
         <div class="col-lg-4 col-md-6 col-sm-12">
             <div class="panel log-panel">

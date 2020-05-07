@@ -1,10 +1,14 @@
 <?php
 
-return ["client"=>"default",
-        "config" => array(
-            "default"=>array(),
-            "LDAP"=>array("domain"=>"ieil.net",
-                "username"=>"admin",
-                "password"=>"password")
+return ["driver" => "DB",
+    "config" => array(
+        "DB" => array(
+            'desc' => "Database - Inbuild authentication database"
+        ),
+        "LDAP" => array("domain" => "ieil.net",
+            "username" => "admin",
+            "password" => "password",
+            'desc' => "LDAP - Microsoft AD connect"
         )
+    )
 ];
